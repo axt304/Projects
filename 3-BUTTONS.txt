@@ -1,0 +1,141 @@
+VIRTUAL DIGITAL CLOCK - Buttons
+
+
+The 'LEDisplay.o' device driver can respond to button presses.
+When a button is pressed, the device driver executes a 'callback',
+which is a function you specify.  (A sample callback is provided.)
+
+The driver has a function with this prototype:
+
+    int register_keyhandler( void(*f)(keybits) );
+
+where 'f' is a function which accepts an argument of type 'keybits'
+and returns void.  For the driver to access the callback function,
+we have to say where in memory the compiled code for this function
+is stored.  If you name your function 'process_key()', then you would
+put this in main():
+
+    register_keyhandler(process_key);
+
+(Note that you can just use the name of the function, because a function
+name is treated as a pointer.  DO NOT put the parentheses after the name,
+because that means 'run this function and put the return value here'.
+You don't want the function to run, you want to pass it as an object.)
+
+
+The keycode passed to your callback function is 16 bits, with the
+following rules:
+
+ 1) If the user typed a key, then the first eight bits are the ASCII
+    keycode the the key that was typed, and the last eight bits are
+    all zero.  If the user presses 'q', then you'll get 0x7100 .
+    If you shift it 8 bits to the right, then you can test it with:
+
+        case 'q':
+
+
+ 2) If the user clicked a button with the mouse, the first eight bits
+    are all zero, and the last eight bits are split in two: the
+    first four are the column, and the last four are the row.
+    Rows and columns both start at 'zero', so if I click the '24 Hr'
+    button, you'll get 0x0000.  If I click the middle button in the
+    second row, you'll get 0x0021.
+
+    You can use bit masking and shifting to get the row and column
+    separated for conditional testing.
+
+
+SETTING BUTTON TEXT:
+
+There is a function, 'set_key_text()', which takes an integer and
+a pointer to char.  The integer, in the range 0-4, indicates which
+button in row 2 you are setting.  The pointer should indicate what
+text you want to appear on the button, up to six characters.  (You
+can use extra spaces to center text on the button.)
+
+You cannot change the text of the top 5 buttons.
+
+
+WHAT THE BUTTONS SHOULD DO:
+
+Each of the five buttons in the top row has a specific function, and
+each has a keyboard shortcut.  You should write code to make them
+all work.
+
+24 HR: switch to 24-hour mode.
+       (shortcut: "2")
+
+AM/PM: switch to AM/PM mode.
+       (shortcut: "a")
+
+DATE: activate date mode.
+       (shortcut: "d")
+
+      Turn off all the colons and the am/pm/24hr indicators, and
+      display the date instead of the time for 5 seconds.  Illuminate
+      the 'Date' indicator.
+
+TEST: somehow test all the pretend LEDs.
+       (shortcut: "t")
+
+      Show all 8s, or make all the digits count up from 0-9, or
+      flash them all left-to-right, or something.  Make it nice.
+
+OFF: the clock should quit.
+       (shortcut: "q")
+
+Note that all of these except 'off' are changes to the View; your buttons
+will need to use 'get_view_properties()' to retrieve the view settings,
+switch bits on or off, and then use 'set_view_properties()' to have the
+result take effect.
+
+
+MAKING YOUR OWN BUTTONS FOR EXTRA CREDIT:
+
+The second row of buttons can be used for anything you want.
+
+Past students have put in buttons for other time zones, such as UTC.
+One student from India put in a button that showed the time in his
+hometown.  (DO NOT do the timezone calculation yourself!  See the
+files in the folder '/opt/kilroy/labtech/ZoneChange'.)  Note that
+different time zone settings are part of the model, so any changes
+go there.
+
+One common item is a timer, which uses several of the buttons: one to
+activate the timer, and then 'start', 'stop', and 'reset'.  The timer
+should count up seconds.  (This can be done by making your own 'struct
+tm' object and setting the values to the hours/ minutes/seconds since
+the timer started, then calling show() with that instead of the result
+of localtime().)
+
+
+OPTION FLAGS:
+
+You can add flags for '-h', '-m', and '-s', letting the user specify
+the hour/minute/second that they want the clock to start at.  So you
+could run './clock -a -h 14 -m 5 -s 15', and the clock would start at
+' 2:05:15 pm'.  If used in conjunction with the '-o' flag, treat the
+h/m/s values as an offset from the current time.  So if it's noon,
+and you run './clock -o -h 2', then it would start at 2pm.  (Note that
+these would be processed in the Controller.)
+
+Another idea might be 'mirror mode', where you'd add a flag '-m' which
+makes the LEDs display so the time looks right in a mirror.  For this,
+the flag would automatically set '-l' if it's not already set.  Also,
+since you can't use the am/pm/24h indicators in reverse view, you'd
+need to turn those off.  (Note that this would require extra bits for
+the view settings, in 'view.h', and you would need to put the logic
+for mirror mode in the View, in show_led().)
+
+
+OTHER STUFF:
+
+Note that the title bar is 78 characters; so you can put in not only
+your name, but you could put the date in the upper-right.  You could
+use the sysinfo(2) system call to put the total number of running
+processes, or the system load, or some other such information in the
+title bar.
+
+Someone once put an RSS reader into his clock, which displayed the
+Rowan University RSS feed in the title bar.
+
