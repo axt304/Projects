@@ -41,16 +41,16 @@ char * make_timestring (struct tm *dateinfo, int dividers)
     // This crashes if it's not set!
     // We will do './clock -a', it will crash, we'll see how to fix it.
     // NEVER DO THIS!
-    char *timeformat; // see strftime(3)
+    char *timeformat = "(unset)"; // see strftime(3)
     
     if ( view_props & DATE_MODE ) {
         // if dividers is true:
+	timeformat = "%-m/%e/20%y dt";
         //   make a string such as "10/31/12 dt" or " 3/17/12 dt"
         //   (note: no leading zero on month!)
         // if dividers is false:
         //   make a string such as "103112d" or " 31712d"
         //   (note: no leading zero on month!)
-        // 
     } else {
         // if dividers is true:
         //   am/pm: make a string such as "11:13:52 am" or " 4:21:35 pm"
@@ -65,7 +65,7 @@ char * make_timestring (struct tm *dateinfo, int dividers)
         // see strftime(3) for details
         if ( dividers ) {
             if ( view_props & AMPM_MODE ) {
-                // do something
+                timeformat = "%l:%M:%S %P";
             } else {
                 timeformat = "%H:%M:%S 24";
             }
