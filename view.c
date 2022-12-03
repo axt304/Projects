@@ -27,9 +27,19 @@ int get_view_properties()
 void do_test(struct tm *dateinfo)
 {
     // turn display bits on and off
-    
-    display();
-    fflush(stdout);
+	int i;
+	digit *where = get_display_location();
+	for( i=0; i<9;i++ )
+	{
+		if( dateinfo -> tm_sec %2 ==0 ){
+			where[i] = 0xff;
+		}
+		else {
+			where[i] = 0x00;
+		}
+	}
+	display();
+	fflush(stdout);
 }
 
 #define MAX_TIMESTR 40 // big enough for any valid data
@@ -42,15 +52,19 @@ char * make_timestring (struct tm *dateinfo, int dividers)
     // We will do './clock -a', it will crash, we'll see how to fix it.
     // NEVER DO THIS!
     char *timeformat = "(unset)"; // see strftime(3)
-    
+
     if ( view_props & DATE_MODE ) {
-        // if dividers is true:
-	timeformat = "%-m/%e/20%y dt";
         //   make a string such as "10/31/12 dt" or " 3/17/12 dt"
         //   (note: no leading zero on month!)
         // if dividers is false:
         //   make a string such as "103112d" or " 31712d"
         //   (note: no leading zero on month!)
+	 if ( dividers ) {
+		timeformat = "%m/%d/%Y dt";
+
+	} else {
+		timeformat = "%m%d%y dt";
+	}
     } else {
         // if dividers is true:
         //   am/pm: make a string such as "11:13:52 am" or " 4:21:35 pm"
@@ -70,8 +84,12 @@ char * make_timestring (struct tm *dateinfo, int dividers)
                 timeformat = "%H:%M:%S 24";
             }
         } else {
-                timeformat = "%H%M%S 24";
-        }
+		if(view_props & AMPM_MODE ) {
+			timeformat = "%l%M%S  %P";
+         	 } else {
+           	 	timeformat = "%H%M%S  24";
+          }
+    }
     }
 
     // make the timestring and return it
@@ -90,11 +108,11 @@ void show_led(struct tm *dateinfo)
     int i;
     digit  bitvalues = 0;
     int hour;
-    int indicator;
+     int indicator;
 
     if ( view_props & TEST_MODE ) {
-        do_test(dateinfo);
-        return;
+	do_test(dateinfo);
+	return;
     }
 
     // This is wrong for two reasons:
@@ -105,19 +123,33 @@ void show_led(struct tm *dateinfo)
     for (i = 0; i < 6; i++) {
         switch ( make_timestring(dateinfo, 0)[i] ) {
             case ' ': bitvalues = 0x00; break;
-            case '1': bitvalues = 0x01; break;
-            case '2': bitvalues = 0x02; break;
-            case '3': bitvalues = 0x03; break;
-            case '4': bitvalues = 0x04; break;
-            case '5': bitvalues = 0x05; break;
-            case '6': bitvalues = 0x06; break;
+            case '1': bitvalues = 0x03; break;
+            case '2': bitvalues = 0x76; break;
+            case '3': bitvalues = 0x57; break;
+            case '4': bitvalues = 0x1b; break;
+            case '5': bitvalues = 0x5d; break;
+            case '6': bitvalues = 0x7d; break;
             case '7': bitvalues = 0x07; break;
-            case '8': bitvalues = 0x08; break;
-            case '9': bitvalues = 0x09; break;
-            case '0': bitvalues = 0x0a; break;
+            case '8': bitvalues = 0x7f; break;
+            case '9': bitvalues = 0x5f; break;
+            case '0': bitvalues = 0x6f; break;
         }
         where[i] = bitvalues;
     }
+if( view_props & DATE_MODE ) {
+	where[7] = 0x01;
+}
+else if ( view_props & AMPM_MODE ) {
+	if( dateinfo -> tm_hour < 13 ) {
+		where[7] = 0xf8;
+	}
+	else {
+   		 where[7] = 0xf4;
+	}
+}
+else {
+    where[7] = 0xf2;
+}
     display();
     fflush(stdout);
 }
@@ -134,5 +166,5 @@ void show(struct tm *dateinfo)
     if ( view_props & LED_MODE )
         show_led(dateinfo);
     else
-        show_text(dateinfo);        
+        show_text(dateinfo);
 }

@@ -6,7 +6,7 @@
  */
 
 #include "clock.h"
-
+#include <limits.h>
 /* CONTROLLER */
 
 static char bugaddress[]="kilroy@elvis.rowan.edu";
@@ -26,8 +26,8 @@ void usage(char *progname)
     fprintf(stderr, "Usage: %s [-advh] [-o number]\n", progname);
     fprintf(stderr, "  -a    : am/pm instead of 24 hour\n");
     fprintf(stderr, "  -d    : show date instead of time\n");
-    fprintf(stderr, "  -D    : show debug info (more Ds = more info)\n");    
-    fprintf(stderr, "  -S #  : stop after # seconds\n");    
+    fprintf(stderr, "  -D    : show debug info (more Ds = more info)\n");
+    fprintf(stderr, "  -S #  : stop after # seconds\n");
     fprintf(stderr, "  -l    : use simulated LED display\n");
     fprintf(stderr, "  -o #  : offset the time by # seconds \n");
     fprintf(stderr, "  -v    : show version information\n");
@@ -37,8 +37,8 @@ void usage(char *progname)
 }
 
 // These store timestamps for when the different modes end
-int test_mode_end;
-int date_mode_end;
+int test_mode_end = INT_MAX;
+int date_mode_end = INT_MAX;
 
 // Set debugging level
 int DebugLevel = 0;
@@ -51,23 +51,23 @@ void process_key(keybits KeyCode)
     void stop_clock(void);
     int KeyRow, KeyCol;
     int view_props;
-    time_t now;
+    time_t now = time(NULL);
 
     if (DebugLevel >= 3) {
         printf("keybits: %x\r\n", KeyCode);
     }
-    
+
     if ( ( KeyCode & 0xff00 ) == 0 ) {  // no ASCII code, so mouse hit
 
         // TODO: figure out KeyRow and KeyCol
         //       right now KeyRow and KeyCol are hardcoded to
         //       24-hour mode
-        KeyRow = 0; KeyCol = 0;
+        KeyRow = KeyCode & 0x0f; KeyCol = KeyCode >> 4;
 
         if (DebugLevel >= 3) {
             printf("row: %d, col: %d\r\n", KeyRow, KeyCol);
         }
-    
+
 
         if (KeyRow == 0) {
             switch (KeyCol) {
@@ -82,9 +82,17 @@ void process_key(keybits KeyCode)
                     set_view_properties (view_props);
                     break;
                 case 2:
+		   view_props = get_view_properties();
+                    view_props |= ( DATE_MODE );
+                    set_view_properties (view_props);
+		   date_mode_end = now +5;
                     break;
                 case 3:
-                    break;
+                   view_props = get_view_properties();
+                    view_props |= ( TEST_MODE );
+                    set_view_properties (view_props);
+	            test_mode_end = now + 5;
+		break;
                 case 4:
                     stop_clock();
                     break;
@@ -94,11 +102,11 @@ void process_key(keybits KeyCode)
                 case 0:
                     break;
             }
-        }        
+        }
     } else { // keystroke
         // TODO: figure out ASCII value from first 8 bits
         //       right now any key goes to 24-hour mode
-        KeyCode = '2';
+        KeyCode >>= 8;
         switch( KeyCode ) {
             case '2':
                 view_props = get_view_properties();
@@ -111,9 +119,17 @@ void process_key(keybits KeyCode)
                 set_view_properties (view_props);
                 break;
             case 'd':
+                view_props = get_view_properties();
+                view_props |= ( DATE_MODE );
+                set_view_properties (view_props);
+		date_mode_end = now +5;
                 break;
             case 't':
-                break;
+		view_props = get_view_properties();
+		view_props |= ( TEST_MODE );
+		set_view_properties (view_props);
+                test_mode_end = now + 5;
+		break;
             case 'q':
                 stop_clock();
                 break;
@@ -123,7 +139,7 @@ void process_key(keybits KeyCode)
     if (DebugLevel >= 3) {
         printf("view_props: %x\r\n", view_props);
     }
-    
+
     // force update when keys are hit
     tick(0);
 }
@@ -142,7 +158,8 @@ int main(int argc, char *argv[])
     int view_props;
     int ampm = 0;     // default to 24hr
     int date = 0;     // default to time
-    int LED  = 0;     // default to text
+    int LED  = 0;
+    int testmode = 0;	     // default to text
 
     // loop through all the options; getopt() can handle together or apart
     while ( ( letter = getopt(argc, argv, "adDS:lo:vh")) != -1 ) {
@@ -156,7 +173,7 @@ int main(int argc, char *argv[])
             case 'o':  set_offset (atoi(optarg));  break;
             case 'v':  version();                  break;
             case 'h':  usage(argv[0]);             break;
-
+	    case 't':  testmode = 1;	       	   break;
             case '?':  // unknown flag; fall through to next case
             default:   // shouldn't happen, but Just In Case
                        // note that getopt() warns about the unknown flag
@@ -172,33 +189,34 @@ int main(int argc, char *argv[])
     // set view properties; default is "24 hour text mode"
     view_props = 0;  // all bits off
     if ( ampm )
-        view_props = AMPM_MODE;
+        view_props |= AMPM_MODE;
     if ( date )
         view_props |= DATE_MODE;  // note |= to switch on a bit
     if ( LED )
         view_props |= LED_MODE;
-
+    if ( testmode )
+	view_props |= TEST_MODE;
     set_view_properties (view_props);
 
     if (DebugLevel >= 2) {
         printf("view_props: %x\r\n", view_props);
     }
 
-    
+
     if (LED) { // set up the fancy display
         start_display();
         // has to be exactly 78 chars
         set_title_bar("----------------------------"
-                      "   YOUR NAME HERE    "
+                      "   AKSHAT BARANWAL    "
                       "----------------------------");
         register_keyhandler(process_key);
 
         // turn on some keys in row 2,
         // or comment these out if unused
-        set_key_text(0, "Sample");
-        set_key_text(1, "Button");
-        set_key_text(2, "foobar");
-        set_key_text(3, "blurfl");
+        //set_key_text(0, "Sample");
+       // set_key_text(1, "Button");
+       // set_key_text(2, "foobar");
+       // set_key_text(3, "blurfl");
     }
 
     /* get the model running */
@@ -229,10 +247,16 @@ void new_time(struct tm *dateinfo)
     // handle date mode
     if ( now > date_mode_end ) {
         // put in code to turn off DATE bit
+	view_props = get_view_properties();
+	view_props &= ( ~ DATE_MODE );
+	set_view_properties (view_props);
     }
     if ( now > test_mode_end ) {
         // put in code to turn off TEST bit
-    }    
+	view_props = get_view_properties();
+        view_props &= ( ~ TEST_MODE );
+        set_view_properties (view_props);
+    }
 
     if (DebugLevel >= 3) {
         printf("view_props: %x\r\n", view_props);
