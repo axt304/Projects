@@ -1,10 +1,3 @@
-/* view.h -- #defines for view options
- *
- * D Provine, 17 October 2017
- * 
- * Copyright (C) Darren Provine, 2009-2022, All Rights Reserved
- */
-
 /* VIEW OPTIONS
  *
  * AMPM (default is 24-hour) --+
