@@ -1,7 +1,7 @@
 /* view.c -- view module for clock project (the V in MVC)
  *
  * Darren Provine, 17 July 2009
- *
+ * Akshat Baranwal, Kareena Khan and Nandini Saini
  * Copyright (C) Darren Provine, 2009-2022, All Rights Reserved
  */
 

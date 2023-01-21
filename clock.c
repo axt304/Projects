@@ -9,7 +9,7 @@
 #include <limits.h>
 /* CONTROLLER */
 
-static char bugaddress[]="kilroy@elvis.rowan.edu";
+static char bugaddress[]="";
 
 // version -- say which version this is and exit
 // (note simple output)
