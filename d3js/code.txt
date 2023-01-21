@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="d3.v3.min.js"></script>
+    <style>
+        .axis {
+            font-size: 7px;
+        }
+        .axis path,
+        .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+        }
+
+        h1 {
+            font-size: 1rem;
+        }
+
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Akshat Baranwal</h1>
+    </main> 
+    <script>
+        var dataset = [];
+        for (var i = 0; i < 50; i++) {
+            dataset.push([(Math.floor(Math.random() * 100) + 1), (Math.floor(Math.random() * 100) + 1)]);
+        }
+        console.log(dataset);
+    
+        var total = 0;
+        for(var i = 0; i < dataset.length; i++) {
+            total += dataset[i][0];
+        }
+
+        var avg = total / dataset.length;
+        console.log(avg);
+
+        var svg = d3.select("main").append("svg").attr("width", 500).attr("height", 500).attr("transform", "translate(20, 20)");
+
+        var circleSymbol = d3.svg.symbol().size(100);
+
+        svg.selectAll("circle")
+            .data(dataset.slice(0, 25))
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) {
+                return 20+d[0];
+            })
+            .attr("cy", function (d) {
+                return 105-d[1];
+            })
+            .attr("fill", "transparent")
+            .attr("stroke", function (d) {
+                if (d[0] > avg) {
+                    return "blue";
+                } else {
+                    return "green";
+                }
+            })
+            .attr("stroke-width", 1)
+            .attr("r", function (d) {
+                return Math.sqrt(Math.sqrt(d[0] * 0.45 + 5));
+            });
+
+        var triangleSymbol = d3.svg.symbol().type("triangle-up");
+
+        svg.selectAll("path")
+            .data(dataset.slice(25, 50))
+            .enter()
+            .append("path")
+            .attr("d", triangleSymbol.size( function (d) {
+                return Math.sqrt(d[0] * 0.45 + 5);
+            }))
+            .attr("fill", "transparent")
+            .attr("stroke", function (d) {
+                if (d[0] > avg) {
+                    return "blue";
+                } else {
+                    return "green";
+                }
+            })
+            .attr("stroke-width", 1)
+            .attr("transform", function (d) {
+                return `translate(${d[0]+20},${105-d[1]})`;
+            })
+            
+        var xScale = d3.scale.linear()
+            .domain([0, 100])
+            .range([0, 100]);
+
+        var yScale = d3.scale.linear()
+            .domain([0, 100])
+            .range([100, 0]);
+
+        svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(20, 105)")
+        .call(d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom"));
+        
+        svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(20, 5)")
+        .call(d3.svg.axis()
+                .scale(yScale)
+                .orient("left"));
+
+    </script>
+</body>
+</html>
