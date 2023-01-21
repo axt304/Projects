@@ -1,10 +1,3 @@
-/* clock.h -- header file for clock program
- *
- * Darren Provine, 17 July 2009
- *
- * Copyright (C) Darren Provine, 2009-2022, All Rights Reserved
- */
-
 #include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
