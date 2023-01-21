@@ -1,7 +1,3 @@
-# Makefile for the clock project
-#
-# Darren Provine, 17 July 2009
-
 PROGRAM = clock
 SOURCES = clock.c model.c view.c
 OBJECTS = clock.o model.o view.o
