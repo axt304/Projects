@@ -1,10 +1,3 @@
-/* clock.c -- controller part of the clock project
- *
- * Darren Provine, 17 July 2009
- *
- * Copyright (C) Darren Provine, 2009-2022, All Rights Reserved
- */
-
 #include "clock.h"
 #include <limits.h>
 /* CONTROLLER */
